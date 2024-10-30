@@ -87,6 +87,26 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         return perteneceRec(elem, nodo);
     }
 
+    private Nodo sucesor(Nodo nodo){
+        
+        // caso tiene subarbol derecho
+        Nodo res;
+        if (nodo.der != null){
+            res = nodo.der;
+            while (res.izq != null){
+            res = res.izq;
+            }
+        } else {
+            // caso contrario: no tiene subarbol derecho
+            // el siguiente es el primer padre de un subarbol izquierdo
+            res = nodo.padre;
+            while (res.der != null && res.der.valor.equals(nodo.valor)) {
+            res = res.padre;
+            }
+            }
+        return res;
+        }
+     
     public void eliminar(T elem) {
         raiz = eliminarNodo(raiz, elem);
         if (!pertenece(elem)){
@@ -94,52 +114,38 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         }
     }
   
-    public Nodo eliminarNodo(Nodo nodo, T elem) {
-        if (nodo == null) {
-            return nodo;
+    public Nodo eliminarNodo(Nodo raiz, T elem) {
+        // caso base
+        if (raiz == null) {
+            return raiz;
         }
-    
-        // Busca el nodo a eliminar
-        if (elem.compareTo(nodo.valor) < 0) {  
-            nodo.izq = eliminarNodo(nodo.izq, elem);
-            if (nodo.izq != null) {
-                nodo.izq.padre = nodo;
-            }
-        } else if (elem.compareTo(nodo.valor) > 0) {
-            nodo.der = eliminarNodo(nodo.der, elem);
-            if (nodo.der != null) {
-                nodo.der.padre = nodo;
-            }
-        } else {
-            // El nodo a eliminar ha sido encontrado
-    
-            // Caso de 0 o 1 hijo derecho
-            if (nodo.izq == null) {
-                Nodo aux = nodo.der;
-                if (aux != null) aux.padre = nodo.padre; // actualiza el padre del hijo derecho
-                return aux;
-            }
-    
-            // Caso de solo hijo izquierdo
-            if (nodo.der == null) {
-                Nodo aux = nodo.izq;
-                if (aux != null) aux.padre = nodo.padre; // actualiza el padre del hijo izquierdo
-                return aux;
-            }
-    
-            // caso de 2 hijos: encuentra el sucesor
-            Nodo sucesor = minimoNodo(nodo.der);
-            nodo.valor = sucesor.valor;
-            nodo.der = eliminarNodo(nodo.der, sucesor.valor);
-    
-            // Asegura que el padre del sucesor está actualizado
-            if (nodo.der != null) {
-                nodo.der.padre = nodo;
-            }
-        }
-        return nodo;
-    }
 
+        // si la clave a buscar está en un subárbol
+        if (elem.compareTo(raiz.valor) < 0) {  
+            raiz.izq = eliminarNodo(raiz.izq, elem);
+        } else if (elem.compareTo(raiz.valor) > 0) {
+            raiz.der = eliminarNodo(raiz.der, elem);
+        } else {
+            // si la raíz coincide con la clave dada
+
+            // casos cuando la raíz tiene 0 hijos o
+            // solo hijo derecho
+            if (raiz.izq == null) {
+            return raiz.der;
+            }
+
+            // cuando la raíz tiene solo hijo izquierdo
+            if (raiz.der == null) {
+            return raiz.izq;
+            }
+
+            // cuando ambos hijos están presentes
+            Nodo sucesor = sucesor(raiz);
+            raiz.valor = sucesor.valor;
+            raiz.der = eliminarNodo(raiz.der, sucesor.valor);
+        }
+        return raiz;
+    }
     
     public String toString(){
         Iterador<T> iterador = this.iterador();
@@ -162,16 +168,26 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         }
     
         public T siguiente() {
-            T res = _actual.valor;
-            if (_actual.der != null) {
-                _actual = minimoNodo(_actual.der);
-                return res;
+            if (this._actual == null) {
+                return  null;
             }
-            _actual = siguientePadre(_actual);
+
+            T res = this._actual.valor;
+
+            _actual = encontrarSiguiente(_actual); 
             return res;
+            
         }
     }
 
+    private Nodo encontrarSiguiente(Nodo raiz) {
+        if (raiz.der != null) {
+            // hay hijo derecho, el siguiente es el minimo del subárbol derecho
+            return minimoNodo(raiz.der);
+        }
+        return siguientePadre(raiz);
+    }
+    
     public Iterador<T> iterador() {
         return new ABB_Iterador();
     }
@@ -185,16 +201,23 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             return raiz; 
         }
         return minimoNodo(raiz.izq);
+
     }
 
     public Nodo siguientePadre(Nodo nodo){
-        Nodo res = nodo.padre;
-        while (res != null && res.der == nodo){
-            nodo = res;
-            res = res.padre;
+
+        Nodo nodoPadre = nodo.padre; 
+        if (nodoPadre == null) {
+            return null; 
+        }//si llega aca no es la raiz tampoco
+
+        if (nodo == nodoPadre.izq) {
+            return nodoPadre;
         }
-        return res;
+        return siguientePadre(nodoPadre);
+
     }
+    
     public Nodo nodo(T elem, Nodo raiz){
 
         if (this.raiz == null){return null;}
@@ -211,6 +234,7 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             } 
     }
     }
+    
     private Boolean perteneceRec(T elem, Nodo nodo){
         if (nodo == null){
             return false;

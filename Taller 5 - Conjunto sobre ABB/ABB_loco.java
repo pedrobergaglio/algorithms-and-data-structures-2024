@@ -87,6 +87,26 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         return perteneceRec(elem, nodo);
     }
 
+    private Nodo sucesor(Nodo nodo){
+        
+        // caso tiene subarbol derecho
+        Nodo res;
+        if (nodo.der != null){
+            res = nodo.der;
+            while (res.izq != null){
+            res = res.izq;
+            }
+        } else {
+            // caso contrario: no tiene subarbol derecho
+            // el siguiente es el primer padre de un subarbol izquierdo
+            res = nodo.padre;
+            while (res.der != null && res.der.valor.equals(nodo.valor)) {
+            res = res.padre;
+            }
+            }
+        return res;
+        }
+     
     public void eliminar(T elem) {
         raiz = eliminarNodo(raiz, elem);
         if (!pertenece(elem)){
@@ -116,18 +136,18 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             // Caso de 0 o 1 hijo derecho
             if (nodo.izq == null) {
                 Nodo aux = nodo.der;
-                if (aux != null) aux.padre = nodo.padre; // actualiza el padre del hijo derecho
+                if (aux != null) aux.padre = nodo.padre; // Actualiza el padre del hijo derecho
                 return aux;
             }
     
             // Caso de solo hijo izquierdo
             if (nodo.der == null) {
                 Nodo aux = nodo.izq;
-                if (aux != null) aux.padre = nodo.padre; // actualiza el padre del hijo izquierdo
+                if (aux != null) aux.padre = nodo.padre; // Actualiza el padre del hijo izquierdo
                 return aux;
             }
     
-            // caso de 2 hijos: encuentra el sucesor
+            // Caso de 2 hijos: encuentra el sucesor
             Nodo sucesor = minimoNodo(nodo.der);
             nodo.valor = sucesor.valor;
             nodo.der = eliminarNodo(nodo.der, sucesor.valor);
@@ -139,7 +159,6 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
         }
         return nodo;
     }
-
     
     public String toString(){
         Iterador<T> iterador = this.iterador();
@@ -169,6 +188,8 @@ public class ABB<T extends Comparable<T>> implements Conjunto<T> {
             }
             _actual = siguientePadre(_actual);
             return res;
+
+            
         }
     }
 
